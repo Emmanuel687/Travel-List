@@ -4,6 +4,7 @@ import { useState } from "react";
 // Main Component
 function App() {
   const [items, setItems] = useState([]);
+  
   function handleAddItem(item) {
     setItems((items) => [...items, item]);
   }
@@ -20,7 +21,7 @@ function App() {
       <Logo />
       <Form onAddItem={handleAddItem} />
       <PackingList items={items} onDeleteItem={handleDeleteItem} onToggleItem={handleToggleItem} />
-      <Stats />
+      <Stats items={items} />
     </div>
   );
 }
@@ -105,10 +106,11 @@ function Item({ item, onDeleteItem, onToggleItem }) {
 }
 
 // Stats Component
-function Stats() {
+function Stats({items}) {
+  const numItems= items.length
   return (
     <footer className="stats">
-      <em> 💼 You have X items on your list, and you already packed X (X%) </em>
+      <em> 💼 You have {numItems} items on your list, and you already packed X (X%) </em>
     </footer>
   );
 }
