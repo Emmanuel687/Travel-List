@@ -4,7 +4,7 @@ import { useState } from "react";
 // Main Component
 function App() {
   const [items, setItems] = useState([]);
-  
+
   function handleAddItem(item) {
     setItems((items) => [...items, item]);
   }
@@ -12,15 +12,31 @@ function App() {
   function handleDeleteItem(id) {
     setItems((items) => items.filter((item) => item.id !== id));
   }
-   function handleToggleItem(id){
-    setItems(items=>items.map(item=>item.id===id?{...item,packed:!item.packed}:item))
+  function handleToggleItem(id) {
+    setItems((items) =>
+      items.map((item) =>
+        item.id === id ? { ...item, packed: !item.packed } : item
+      )
+    );
+  }
 
-   }
+  function handleClear() {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete all items"
+    );
+
+    if (confirmed) setItems([]);
+  }
   return (
     <div className="app">
       <Logo />
       <Form onAddItem={handleAddItem} />
-      <PackingList items={items} onDeleteItem={handleDeleteItem} onToggleItem={handleToggleItem} />
+      <PackingList
+        items={items}
+        onDeleteItem={handleDeleteItem}
+        onToggleItem={handleToggleItem}
+        onClearList={handleClear}
+      />
       <Stats items={items} />
     </div>
   );
@@ -80,14 +96,42 @@ function Form({ onAddItem }) {
 }
 
 // Packing List Component
-function PackingList({ items, onDeleteItem, onToggleItem }) {
+function PackingList({ items, onDeleteItem, onToggleItem, onClearList }) {
+  const [sortBy, setSortBy] = useState("input");
+
+  let sortedItems;
+  if (sortBy === "input") sortedItems = items;
+
+  if (sortBy === "description")
+    sortedItems = items
+      .slice()
+      .sort((a, b) => a.description.localeCompare(b.description));
+
+  if (sortBy === "packed")
+    sortedItems = items
+      .slice()
+      .sort((a, b) => Number(a.packed) - Number(b.packed));
+
   return (
     <div className="list">
       <ul>
-        {items.map((item) => (
-          <Item item={item} key={item.id} onDeleteItem={onDeleteItem} onToggleItem={onToggleItem}/>
+        {sortedItems.map((item) => (
+          <Item
+            item={item}
+            key={item.id}
+            onDeleteItem={onDeleteItem}
+            onToggleItem={onToggleItem}
+          />
         ))}
       </ul>
+      <div className="actions">
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value="input">Sort by input Order</option>
+          <option value="description">Sort by description Order</option>
+          <option value="packed">Sort by packed status</option>
+        </select>
+        <button onClick={onClearList}>Clear List</button>
+      </div>
     </div>
   );
 }
@@ -96,7 +140,11 @@ function PackingList({ items, onDeleteItem, onToggleItem }) {
 function Item({ item, onDeleteItem, onToggleItem }) {
   return (
     <li>
-      <input type="checkbox"  value={item.packed } onChange={()=>onToggleItem(item.id)}/>
+      <input
+        type="checkbox"
+        value={item.packed}
+        onChange={() => onToggleItem(item.id)}
+      />
       <span style={item.packed ? { textDecoration: "line-through" } : {}}>
         {item.quantity} {item.description}
       </span>
@@ -106,11 +154,27 @@ function Item({ item, onDeleteItem, onToggleItem }) {
 }
 
 // Stats Component
-function Stats({items}) {
-  const numItems= items.length
+function Stats({ items }) {
+  const numItems = items.length;
+
+  if (!items.length)
+    return (
+      <p
+        className="stats
+      "
+      >
+        <em>Start Adding Items to your packing list 🚀🚀</em>
+      </p>
+    );
+  const numPacked = items.filter((item) => item.packed).length;
+  const percentage = Math.round((numPacked / numItems) * 100);
   return (
     <footer className="stats">
-      <em> 💼 You have {numItems} items on your list, and you already packed X (X%) </em>
+      {percentage === 100
+        ? "You got everything ready to go ✈"
+        : `
+        💼 You have ${numItems} items on your list, and you already packed
+         ${numPacked}  (${percentage}%)`}
     </footer>
   );
 }
